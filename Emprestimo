@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NATOBANK - Simulador de Crédito</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23110f0b'/%3E%3Ctext x='50' y='58' font-size='48' text-anchor='middle' fill='%23d4af37' font-family='Arial'%3EN%3C/text%3E%3C/svg%3E">
+<style>
+    :root{
+        --gold:#d4af37;
+        --bg:#000;
+        --card:#111;
+        --muted:#a8925e;
+        --success:#25d366;
+    }
+    *{box-sizing:border-box}
+    body{font-family:Inter, Arial, sans-serif;padding:20px;background:var(--bg);color:var(--gold);margin:0}
+    .wrap{max-width:720px;margin:20px auto;padding:20px}
+    .header{display:flex;align-items:center;gap:12px}
+    .logoBox{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#111 0%, #151515 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,0.6);border:1px solid rgba(212,175,55,0.14)}
+    .logoBox svg{width:44px;height:44px}
+    .brand{font-weight:800;font-size:20px}
+    .tag{color:var(--muted);font-size:13px}
+
+    .card{background:var(--card);padding:22px;border-radius:14px;border:1px solid rgba(212,175,55,0.12);box-shadow:0 8px 40px rgba(0,0,0,0.6);margin-top:14px}
+    label{display:block;color:var(--gold);font-weight:700;margin-top:8px}
+    input, select{width:100%;padding:12px;border-radius:10px;border:1px solid rgba(212,175,55,0.08);background:#0a0a0a;color:var(--gold);margin-top:8px}
+    .row{display:flex;gap:12px}
+    .col{flex:1}
+    .btn{width:100%;padding:12px;border-radius:10px;border:none;background:var(--gold);color:#0b0b0b;font-weight:800;cursor:pointer;margin-top:12px}
+    .btn.secondary{background:transparent;border:1px solid rgba(212,175,55,0.14);color:var(--gold)}
+    .muted{color:var(--muted);font-size:13px}
+
+    .desconto-bar{margin-top:10px;height:12px;background:#070707;border-radius:8px;overflow:hidden;border:1px solid rgba(212,175,55,0.08);display:none}
+    .desconto-fill{height:100%;background:var(--gold);width:0%;transition:width 0.45s ease}
+    .desconto-info{text-align:center;margin-top:8px;font-size:14px;color:var(--gold);display:none}
+
+    .result{margin-top:18px;padding:14px;border-radius:10px;background:#0b0b0b;border:1px solid rgba(255,255,255,0.02)}
+    .line{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.02);font-size:15px}
+    .small{font-size:13px;color:var(--muted)}
+
+    /* loading */
+    .spinner{width:42px;height:42px;border-radius:50%;border:4px solid rgba(255,255,255,0.06);border-top-color:var(--gold);animation:spin 1s linear infinite;margin:10px auto;display:none}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* modal confirm */
+    .modal{position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(2,2,2,0.6);z-index:50;display:none}
+    .modalCard{background:#0d0d0d;padding:20px;border-radius:12px;max-width:520px;width:92%;border:1px solid rgba(212,175,55,0.12)}
+    .modalHeader{font-weight:800;color:var(--gold);margin-bottom:8px}
+    .modalRow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.02)}
+
+    /* floating whatsapp */
+    .whap{position:fixed;right:18px;bottom:18px;background:var(--success);color:#000;padding:12px;border-radius:50%;box-shadow:0 8px 30px rgba(0,0,0,0.4);z-index:80;border:none;display:flex;align-items:center;justify-content:center}
+
+    footer{color:var(--muted);text-align:center;margin-top:22px;font-size:13px}
+
+    /* responsive */
+    @media(max-width:520px){.row{flex-direction:column}.brand{font-size:18px}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+    <div class="header">
+        <div class="logoBox">
+            <!-- simple SVG logo N -->
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                <rect width="100" height="100" rx="14" fill="#0b0b0b" />
+                <path d="M20 80 L20 20 L55 65 L80 20 L80 80" stroke="#d4af37" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+        </div>
+        <div>
+            <div class="brand">NATOBANK</div>
+            <div class="tag">Simulador de Crédito • Premium</div>
+        </div>
+    </div>
+
+    <div class="card" role="region" aria-label="Simulador de crédito">
+        <label for="valor">Valor desejado (R$)</label>
+        <input id="valor" inputmode="numeric" placeholder="Ex.: 1500" aria-describedby="helpValor">
+        <div id="helpValor" class="small">Valor mínimo R$ 100 — sem comprovante online nesta etapa.</div>
+
+        <div class="row">
+            <div class="col">
+                <label for="parcelas">Parcelas</label>
+                <select id="parcelas" aria-label="Número de parcelas">
+                    <option value="">Selecione...</option>
+                    <option value="1">1x</option>
+                    <option value="2">2x</option>
+                    <option value="3">3x</option>
+                    <option value="4">4x</option>
+                    <option value="5">5x</option>
+                    <option value="6">6x</option>
+                    <option value="7">7x</option>
+                    <option value="8">8x</option>
+                    <option value="9">9x</option>
+                    <option value="10">10x</option>
+                    <option value="11">11x</option>
+                    <option value="12">12x</option>
+                </select>
+            </div>
+            <div class="col">
+                <label for="dataPagamento">Data do 1º pagamento</label>
+                <select id="dataPagamento" aria-label="Data do primeiro pagamento">
+                    <option value="">Selecione...</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="descontoContainer" class="desconto-bar"><div id="descontoFill" class="desconto-fill"></div></div>
+        <div id="descontoInfo" class="desconto-info"></div>
+
+        <div style="display:flex;gap:12px;margin-top:12px">
+            <button id="btnPreview" class="btn">Simular</button>
+            <button id="btnReset" class="btn secondary">Limpar</button>
+        </div>
+
+        <div class="spinner" id="spinner" role="status" aria-hidden></div>
+
+        <div id="resultado" class="result" style="display:none" aria-live="polite"></div>
+
+        <div class="small" style="margin-top:12px">🔒 Seus dados são confidenciais. Esta etapa é apenas uma simulação.</div>
+    </div>
+
+    <footer>© 2025 NATOBANK — Todos os direitos reservados.</footer>
+</div>
+
+<!-- modal confirmação -->
+<div class="modal" id="modalConfirm" role="dialog" aria-modal="true">
+    <div class="modalCard">
+        <div class="modalHeader">Confirme seus dados</div>
+        <div id="modalBody">
+            <!-- conteúdo preenchido por JS -->
+        </div>
+        <div style="display:flex;gap:12px;margin-top:12px">
+            <button id="confirmSend" class="btn">Confirmar e Enviar</button>
+            <button id="cancelSend" class="btn secondary">Voltar</button>
+        </div>
+    </div>
+</div>
+
+<!-- whatsapp flutuante -->
+<button class="whap" id="fastWhats" title="Falar com um consultor" aria-label="Falar com consultor">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20.52 3.48a12 12 0 10-17 17L2 22l1.52-1.52A12 12 0 0020.52 3.48z" fill="#fff" opacity="0.08"/><path d="M17.472 14.382c-.312-.156-1.848-.912-2.132-1.012-.284-.1-.492-.156-.7.156-.208.312-.8 1.012-.98 1.216-.18.204-.36.234-.672.078-.312-.156-1.32-.486-2.516-1.56-.932-.828-1.56-1.848-1.74-2.16-.18-.312-.02-.48.14-.636.144-.132.312-.36.468-.54.156-.18.208-.312.312-.52.104-.208.052-.39-.026-.546-.078-.156-.7-1.684-.96-2.312-.252-.608-.508-.52-.7-.53l-.6-.02c-.208 0-.546.078-.832.39-.288.312-1.1 1.08-1.1 2.632 0 1.552 1.128 3.056 1.288 3.268.16.204 2.224 3.496 5.392 4.888 3.168 1.392 3.168.928 3.744.872.576-.052 1.84-.744 2.104-1.464.264-.72.264-1.336.184-1.464-.08-.132-.288-.204-.6-.36z" fill="#fff"/></svg>
+</button>
+
+<script>
+const phone = '5531994553854'; // seu número
+
+// util fmt
+function fmtBR(v){ return Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+// gerar datas (sempre 30 dias futuros)
+function gerarDatas(){
+    const select = document.getElementById('dataPagamento');
+    // se já tem datas, não re-cria para evitar perder seleção (mas se estiver vazia, cria)
+    if(select.options.length > 1) return; 
+    select.innerHTML = '<option value="">Selecione...</option>';
+    const hoje = new Date();
+    for(let i=1;i<=30;i++){
+        const d = new Date();
+        d.setDate(hoje.getDate()+i);
+        const dia = String(d.getDate()).padStart(2,'0');
+        const mes = String(d.getMonth()+1).padStart(2,'0');
+        const ano = d.getFullYear();
+        const txt = `${dia}/${mes}/${ano}`;
+        select.innerHTML += `<option value="${txt}">${txt}</option>`;
+    }
+}
+
+// popular também ao focar no select (se cliente clicar direto)
+document.getElementById('dataPagamento').addEventListener('focus', gerarDatas);
+
+// validar valor em tempo real
+const valorInput = document.getElementById('valor');
+valorInput.addEventListener('input', ()=>{
+    const v = parseFloat(valorInput.value);
+    if(isNaN(v) || v < 100){
+        valorInput.style.borderColor = 'rgba(255,0,0,0.6)';
+    } else {
+        valorInput.style.borderColor = 'rgba(0,255,0,0.15)';
+    }
+    document.getElementById('resultado').style.display = 'none';
+});
+
+// ao mudar parcelas, gerar datas
+const parcelasSel = document.getElementById('parcelas');
+parcelasSel.addEventListener('change', ()=>{
+    if(parcelasSel.value) gerarDatas();
+});
+
+// ao mudar a data, atualiza a barra de desconto imediatamente
+document.getElementById('dataPagamento').addEventListener('change', ()=>{
+    const dataPag = document.getElementById('dataPagamento').value;
+    if(!dataPag) return;
+    const partes = dataPag.split('/');
+    const dataEscolhida = new Date(partes[2], partes[1]-1, partes[0]);
+    const hoje = new Date();
+    const diffDias = Math.ceil((dataEscolhida - hoje)/(1000*60*60*24));
+    updateDescontoVisual(diffDias);
+});
+
+// reset
+document.getElementById('btnReset').addEventListener('click', ()=>{
+    document.getElementById('valor').value = '';
+    parcelasSel.value = '';
+    document.getElementById('dataPagamento').innerHTML = '<option value="">Selecione...</option>';
+    document.getElementById('descontoFill').style.width = '0%';
+    document.getElementById('descontoInfo').style.display = 'none';
+    document.getElementById('descontoContainer').style.display = 'none';
+    document.getElementById('resultado').style.display = 'none';
+});
+
+// preview com loading + confirmação
+document.getElementById('btnPreview').addEventListener('click', ()=>{
+    const valor = parseFloat(document.getElementById('valor').value);
+    const parcelas = parseInt(document.getElementById('parcelas').value);
+    const dataPag = document.getElementById('dataPagamento').value;
+    if(isNaN(valor) || valor < 100){ alert('Digite um valor válido (mínimo R$100).'); return; }
+    if(!parcelas){ alert('Escolha o número de parcelas.'); return; }
+    if(!dataPag){ alert('Escolha a data do primeiro pagamento.'); return; }
+
+    const spinner = document.getElementById('spinner');
+    spinner.style.display = 'block';
+    setTimeout(()=>{ spinner.style.display = 'none'; showConfirmation(); }, 800);
+});
+
+function updateDescontoVisual(diffDias){
+    const container = document.getElementById('descontoContainer');
+    const fill = document.getElementById('descontoFill');
+    const info = document.getElementById('descontoInfo');
+    container.style.display = 'block';
+    info.style.display = 'block';
+    if(diffDias <= 10){ fill.style.width = '100%'; info.textContent = '🎯 Desconto máximo: 3% na 1ª parcela'; }
+    else if(diffDias <= 20){ fill.style.width = '60%'; info.textContent = '🔥 Desconto de 2% na 1ª parcela'; }
+    else { fill.style.width = '20%'; info.textContent = 'Sem desconto — pague antes para economizar!'; }
+}
+
+function showConfirmation(){
+    // calculos
+    const valor = parseFloat(document.getElementById('valor').value);
+    const parcelas = parseInt(document.getElementById('parcelas').value);
+    const dataPag = document.getElementById('dataPagamento').value;
+    const partes = dataPag.split('/');
+    const dataEscolhida = new Date(partes[2], partes[1]-1, partes[0]);
+    const hoje = new Date();
+    const diffDias = Math.ceil((dataEscolhida - hoje)/(1000*60*60*24));
+
+    // juros
+    const jurosFixo = valor <= 1000 ? valor*0.20 : valor*0.10;
+    let jurosPrimeira = jurosFixo;
+    let descontoPct = 0;
+    if(diffDias <= 10){ jurosPrimeira = jurosFixo*0.97; descontoPct = 3; }
+    else if(diffDias <= 20){ jurosPrimeira = jurosFixo*0.98; descontoPct = 2; }
+
+    const parcelaPrimeira = (valor/parcelas) + jurosPrimeira;
+    const parcelaDemais = (valor/parcelas) + jurosFixo;
+    const economia = jurosFixo - jurosPrimeira;
+
+    // atualizar barra e info
+    const container = document.getElementById('descontoContainer');
+    const fill = document.getElementById('descontoFill');
+    const info = document.getElementById('descontoInfo');
+    container.style.display = 'block';
+    info.style.display = 'block';
+    if(descontoPct === 3){ fill.style.width = '100%'; info.textContent = '🎯 Desconto máximo: 3% na 1ª parcela'; }
+    else if(descontoPct === 2){ fill.style.width = '60%'; info.textContent = '🔥 Desconto de 2% na 1ª parcela'; }
+    else { fill.style.width = '20%'; info.textContent = 'Sem desconto — pague antes para economizar!'; }
+
+    // montar modal
+    const modal = document.getElementById('modalConfirm');
+    const body = document.getElementById('modalBody');
+    body.innerHTML = `
+        <div class="modalRow"><div>Valor solicitado</div><div>R$ ${fmtBR(valor)}</div></div>
+        <div class="modalRow"><div>1ª parcela</div><div>R$ ${fmtBR(parcelaPrimeira)} ${descontoPct? `(${descontoPct}% desconto)` : ''}</div></div>
+        <div class="modalRow"><div>Demais parcelas</div><div>${parcelas-1}x de R$ ${fmtBR(parcelaDemais)}</div></div>
+        <div class="modalRow"><div>Economia na 1ª parcela</div><div>R$ ${fmtBR(economia)}</div></div>
+        <div class="modalRow"><div>Data do 1º pagamento</div><div>${dataPag}</div></div>
+        <div class="small" style="margin-top:8px">Ao confirmar, abriremos o WhatsApp com sua solicitação pré-preenchida.</div>
+    `;
+    modal.style.display = 'flex';
+
+    // ligar botões
+    document.getElementById('confirmSend').onclick = ()=>{
+        modal.style.display = 'none';
+        sendWhats(valor, parcelas, parcelaPrimeira, parcelaDemais, dataPag);
+    };
+    document.getElementById('cancelSend').onclick = ()=>{ modal.style.display = 'none'; };
+}
+
+function sendWhats(valor, parcelas, parcelaPrimeira, parcelaDemais, dataPag){
+    // construir mensagem
+    const mensagem = encodeURIComponent(
+`SOLICITAÇÃO DE CRÉDITO - NATOBANK
+
+Valor solicitado: R$ ${valor.toFixed(2)}
+1ª parcela: R$ ${parcelaPrimeira.toFixed(2)}
+Demais parcelas: R$ ${parcelaDemais.toFixed(2)}
+Total de parcelas: ${parcelas}
+Data do primeiro pagamento: ${dataPag}`
+    );
+    window.open(`https://wa.me/${phone}?text=${mensagem}`,'_blank');
+}
+
+// atalho whatsapp flutuante
+document.getElementById('fastWhats').addEventListener('click', ()=>{
+    window.open(`https://wa.me/${phone}`,'_blank');
+});
+
+</script>
+</body>
+</html>
